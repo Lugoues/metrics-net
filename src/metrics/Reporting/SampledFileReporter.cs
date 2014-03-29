@@ -8,7 +8,7 @@ namespace metrics.Reporting
     /// <summary>
     /// A file-based reporter that produces a timestamped-suffixed output file for each sample collection
     /// </summary>
-    public class SampledFileReporter : ReporterBase
+    public class SampledFileReporter : TextWriterReporter
     {
         private readonly Encoding _encoding;
         private readonly string _directory;

@@ -1,10 +1,8 @@
 ﻿using System;
-using System.IO;
 
 namespace metrics.Reporting
 {
-    
-    public class ConsoleReporter : ReporterBase
+    public class ConsoleReporter : TextWriterReporter
     {
         public ConsoleReporter() : base(Console.Out)
         {

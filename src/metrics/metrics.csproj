@@ -74,6 +74,7 @@
     <Compile Include="Reporting\FileReporter.cs" />
     <Compile Include="Reporting\SampledFileReporter.cs" />
     <Compile Include="Net\MetricsListener.cs" />
+    <Compile Include="Reporting\TextWriterReporter.cs" />
     <Compile Include="Stats\DateTimeSupplier.cs" />
     <Compile Include="Stats\IDateTimeSupplier.cs" />
     <Compile Include="Stats\LimitedTimeSample.cs" />

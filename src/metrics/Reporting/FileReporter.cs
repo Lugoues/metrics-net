@@ -6,7 +6,7 @@ namespace metrics.Reporting
     /// <summary>
     /// A file-based reporter that outputs formatted metrics to a single flat file
     /// </summary>
-    public class FileReporter : ReporterBase
+    public class FileReporter : TextWriterReporter
     {
         public FileReporter(string path) : base(new StreamWriter(path, true, Encoding.UTF8))
         {

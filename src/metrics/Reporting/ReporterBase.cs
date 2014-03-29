@@ -5,103 +5,75 @@ using System.Threading.Tasks;
 
 namespace metrics.Reporting
 {
-    /// <summary>
-    ///  A reporter that periodically prints out formatted application metrics to a specified <see cref="TextWriter" />
-    /// </summary>
-    public abstract class ReporterBase : IReporter
-    {
-        protected TextWriter Out;
-        private readonly IReportFormatter _formatter;
-        protected CancellationTokenSource Token;
-        internal int Runs { get; set; } 
+	/// <summary>
+	///  A reporter that periodically prints out formatted application metrics to a specified <see cref="TextWriter" />
+	/// </summary>
+	public abstract class ReporterBase : IReporter
+	{
+		protected CancellationTokenSource Token;
+		private int Runs { get; set; } 
 
-        protected ReporterBase(TextWriter writer) : this(writer, new HumanReadableReportFormatter())
-        {
-            Out = writer;
-        }
+		/// <summary>
+		/// Starts the reporting task for periodic output
+		/// </summary>
+		/// <param name="period">The period between successive displays</param>
+		/// <param name="unit">The period time unit</param>
+		public virtual void Start(long period, TimeUnit unit)
+		{
+			var seconds = unit.Convert(period, TimeUnit.Seconds);
+			var interval = TimeSpan.FromSeconds(seconds);
 
-        protected ReporterBase(TextWriter writer, IReportFormatter formatter)
-        {
-            Out = writer;
-            _formatter = formatter;
-        }
+			Token = new CancellationTokenSource();
+			Task.Factory.StartNew(async () =>
+			{
+				OnStarted();
+				while (!Token.IsCancellationRequested)
+				{
+					await Task.Delay(interval, Token.Token);
+					if (!Token.IsCancellationRequested)
+					{
+						Runs++;
+						Run();
+					}
+					
+				}
+			}, Token.Token);
+		}
 
-        /// <summary>
-        /// Starts the reporting task for periodic output
-        /// </summary>
-        /// <param name="period">The period between successive displays</param>
-        /// <param name="unit">The period time unit</param>
-        public virtual void Start(long period, TimeUnit unit)
-        {
-            var seconds = unit.Convert(period, TimeUnit.Seconds);
-            var interval = TimeSpan.FromSeconds(seconds);
+		public void Stop()
+		{
+			Token.Cancel();
+			OnStopped();
+		}
 
-            Token = new CancellationTokenSource();
-            Task.Factory.StartNew(async () =>
-            {
-                OnStarted();
-                while (!Token.IsCancellationRequested)
-                {
-                    await Task.Delay(interval, Token.Token);
-	                if (!Token.IsCancellationRequested)
-		                Run();
-                }
-            }, Token.Token);
-        }
+		public event EventHandler<EventArgs> Started;
+		public void OnStarted()
+		{
+			var handler = Started;
+			if (handler != null)
+			{
+				handler(this, EventArgs.Empty);
+			}
+		}
 
-        public void Stop()
-        {
-            Token.Cancel();
-            OnStopped();
-        }
+		public event EventHandler<EventArgs> Stopped;
+		public void OnStopped()
+		{
+			var handler = Stopped;
+			if (handler != null)
+			{
+				handler(this, EventArgs.Empty);
+			}
+		}
 
-        public event EventHandler<EventArgs> Started;
-        public void OnStarted()
-        {
-            var handler = Started;
-            if (handler != null)
-            {
-                handler(this, EventArgs.Empty);
-            }
-        }
+		public abstract void Run();
 
-        public event EventHandler<EventArgs> Stopped;
-        public void OnStopped()
-        {
-            var handler = Stopped;
-            if (handler != null)
-            {
-                handler(this, EventArgs.Empty);
-            }
-        }
-
-        public virtual void Run()
-        {
-            try
-            {
-                Out.Write(_formatter.GetSample());
-                
-                Out.Flush();
-
-                Runs++;
-            }
-            catch (Exception e)
-            {
-                Out.WriteLine(e.StackTrace);
-            }
-        }
-
-        public void Dispose()
-        {
-            if (Token != null)
-            {
-                Token.Cancel();
-            }
-
-            if (Out != null)
-            {
-                Out.Close();
-            }
-        }
-    }
+		public virtual void Dispose()
+		{
+			if (Token != null)
+			{
+				Token.Cancel();
+			}
+		}
+	}
 }
